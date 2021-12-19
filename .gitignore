@@ -50,3 +50,5 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+/Docs/I2C interface Diagrams.drawio
+/Docs/I2C interface guide.docx
