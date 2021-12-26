@@ -52,3 +52,5 @@ Mkfile.old
 dkms.conf
 /Docs/I2C interface Diagrams.drawio
 /Docs/I2C interface guide.docx
+/Docs/SPI interface Diagrams.drawio
+/Docs/SPI interface guide.docx
