@@ -189,10 +189,10 @@ typedef struct
 #define SPI_CPHA_GET(value)  (((uint16_t)(value) & SPI_CPHA_Mask) >> SPI_CPHA_Pos) //!< Get clock phase
 
 #define SPI_COMM_MODE_Mask  ( SPI_CPOL_Mask | SPI_CPHA_Mask )
-#define SPI_COMM_MODE0      ( SPI_CPOL_SET(0) | SPI_CPHA_GET(0) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 0 ; Clock phase (CPHA) = 0 ; Clock edge (CKE/NCPHA) = 1
-#define SPI_COMM_MODE1      ( SPI_CPOL_SET(0) | SPI_CPHA_GET(1) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 0 ; Clock phase (CPHA) = 1 ; Clock edge (CKE/NCPHA) = 0
-#define SPI_COMM_MODE2      ( SPI_CPOL_SET(1) | SPI_CPHA_GET(0) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 1 ; Clock phase (CPHA) = 0 ; Clock edge (CKE/NCPHA) = 1
-#define SPI_COMM_MODE3      ( SPI_CPOL_SET(1) | SPI_CPHA_GET(1) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 1 ; Clock phase (CPHA) = 1 ; Clock edge (CKE/NCPHA) = 0
+#define SPI_COMM_MODE0      ( SPI_CPOL_SET(0) | SPI_CPHA_SET(0) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 0 ; Clock phase (CPHA) = 0 ; Clock edge (CKE/NCPHA) = 1
+#define SPI_COMM_MODE1      ( SPI_CPOL_SET(0) | SPI_CPHA_SET(1) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 0 ; Clock phase (CPHA) = 1 ; Clock edge (CKE/NCPHA) = 0
+#define SPI_COMM_MODE2      ( SPI_CPOL_SET(1) | SPI_CPHA_SET(0) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 1 ; Clock phase (CPHA) = 0 ; Clock edge (CKE/NCPHA) = 1
+#define SPI_COMM_MODE3      ( SPI_CPOL_SET(1) | SPI_CPHA_SET(1) ) //! SPI mode 0: Clock polarity (CPOL/CKP) = 1 ; Clock phase (CPHA) = 1 ; Clock edge (CKE/NCPHA) = 0
 
 //! SPI bit width and mode enumerator
 typedef enum
@@ -251,7 +251,7 @@ struct SPI_Interface
   void *InterfaceDevice;                 //!< This is the pointer that will be in the first parameter of all interface call functions
   SPIInit_Func fnSPI_Init;               //!< This function will be called at driver initialization to configure the interface driver
   SPITransferPacket_Func fnSPI_Transfer; //!< This function will be called when the driver needs to transfer data over the SPI communication with the device
-  uint8_t Channel;                       //!< SPI channel of the interface device (This is not the ChipSelect)
+  uint8_t Channel;                       //!< SPI channel of the interface device in case of multiple virtual SPI channels (This is not the ChipSelect)
 };
 
 //-----------------------------------------------------------------------------
