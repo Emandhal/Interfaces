@@ -150,7 +150,7 @@ typedef struct
 // Fill packet description helpers
 //********************************************************************************************************************
 
-//! Prepare I2C packet description to transmit bytes
+//! Prepare I2C packet description to check component
 #define I2C_INTERFACE_NO_DATA_DESC(chipAddr)                                                                                               \
   {                                                                                                                                        \
     I2C_MEMBER(Config.Value) I2C_NO_POLLING | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(I2C_SIMPLE_TRANSFER), \
@@ -159,7 +159,19 @@ typedef struct
     I2C_MEMBER(pBuffer     ) NULL,                                                                                                         \
     I2C_MEMBER(BufferSize  ) 0,                                                                                                            \
     I2C_MEMBER(Stop        ) true,                                                                                                         \
-  }
+}
+
+//! Prepare I2C packet description to check the DMA status
+#define I2C_INTERFACE_CHECK_DMA_DESC(chipAddr,transactionNumber)                                                           \
+{                                                                                                                          \
+  I2C_MEMBER(Config.Value) I2C_USE_POLLING | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE)                                \
+                         | I2C_TRANSFER_TYPE_SET(I2C_SIMPLE_TRANSFER) | I2C_TRANSACTION_NUMBER_SET(CurrTransactionNumber), \
+  I2C_MEMBER(Start       ) true,                                                                                           \
+  I2C_MEMBER(ChipAddr    ) chipAddr,                                                                                       \
+  I2C_MEMBER(pBuffer     ) NULL,                                                                                           \
+  I2C_MEMBER(BufferSize  ) 0,                                                                                              \
+  I2C_MEMBER(Stop        ) true,                                                                                           \
+}
 
 //! Prepare I2C packet description to transmit bytes
 #define I2C_INTERFACE_TX_DATA_DESC(chipAddr,start,txData,size,stop,transferType)                                                    \
@@ -172,7 +184,7 @@ typedef struct
     I2C_MEMBER(Stop        ) stop,                                                                                                  \
   }
 
-//! Prepare I2C packet description to transmit bytes
+//! Prepare I2C packet description to receive bytes
 #define I2C_INTERFACE_RX_DATA_DESC(chipAddr,start,rxData,size,stop,transferType)                                                    \
   {                                                                                                                                 \
     I2C_MEMBER(Config.Value) I2C_NO_POLLING | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(transferType), \

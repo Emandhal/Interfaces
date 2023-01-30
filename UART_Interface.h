@@ -69,7 +69,7 @@ typedef struct UART_Interface UART_Interface; //! Typedef of UART_Interface devi
  * @param[out] *actuallySent Is the count of data actually sent to the transmit FIFO
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*UARTTryTransmit_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallySent);
+typedef eERRORRESULT (*UARTtryTransmit_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallySent);
 
 
 /*! @brief Interface function for UART receive
@@ -81,7 +81,7 @@ typedef eERRORRESULT (*UARTTryTransmit_Func)(UART_Interface *pIntDev, uint8_t *d
  * @param[out] *lastCharError Is the last char received error. Set to 0 if no errors
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*UARTReceive_Func)(UART_Interface *pIntDev, uint8_t *data, size_t *actuallyReceived, uint8_t *lastCharError);
+typedef eERRORRESULT (*UARTReceive_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallyReceived, uint8_t *lastCharError);
 
 //-----------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ typedef eERRORRESULT (*UARTReceive_Func)(UART_Interface *pIntDev, uint8_t *data,
 struct UART_Interface
 {
   void *InterfaceDevice;                //!< This is the pointer that will be in the first parameter of all interface call functions
-  UARTTryTransmit_Func fnUART_Transmit; //!< This function will be called when a driver/library needs to transmit data
+  UARTtryTransmit_Func fnUART_Transmit; //!< This function will be called when a driver/library needs to transmit data
   UARTReceive_Func fnUART_Receive;      //!< This function will be called when a driver/library needs to receive data
   uint8_t Channel;                      //!< UART channel of the interface device
 };
