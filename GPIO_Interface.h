@@ -1,12 +1,11 @@
-/*******************************************************************************
+/*!*****************************************************************************
  * @file    GPIO_Interface.h
  * @author  Fabien 'Emandhal' MAILLY
  * @version 1.0.0
  * @date    23/10/2021
  * @brief   GPIO interface for driver
- *
- * This GPIO interface definitions for all the https://github.com/Emandhal drivers
- * and developments
+ * @details This GPIO interface definitions for all the https://github.com/Emandhal
+ * drivers and developments
  ******************************************************************************/
  /* @page License
  *
