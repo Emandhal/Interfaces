@@ -55,7 +55,7 @@ extern "C" {
  * {
  *   // Do stuff
  *   if (a != b) return ERR_GENERATE(ERR__BAD_DATA); // This will combine the ERRCONTEXT__TIMERTICKS context with the ERR__BAD_DATA error
- *   return ERR_OK;                                  // This one have an optional a context
+ *   return ERR_NONE;                                // This one have an optional a context
  * }
  * @endcode
  *
@@ -97,59 +97,72 @@ extern "C" {
 #define ERR_ERROR_CONTEXT_Set(context)    (((uint32_t)(context) << ERR_ERROR_CONTEXT_Pos) & ERR_ERROR_CONTEXT_Mask)             //!< Set the context of the error
 #define ERR_ERROR_Get(error)              (eERRORRESULT)((uint32_t)(error) & ~ERR_ERROR_CONTEXT_Mask)                           //!< Get the error (ie. isolate the error from the context)
 #define ERR_ERROR_Set(error)              ((uint32_t)(error) & ~ERR_ERROR_CONTEXT_Mask)                                         //!< Set the error
-#define ERR_CONTEXTUALIZE(context,error)  ( (error) != ERR_OK ? (eERRORRESULT)(ERR_ERROR_CONTEXT_Set(context) | ERR_ERROR_Set(error)) : ERR_OK ) //!< Conbine the context and the error. Will be simplified at compile time if error is fixed
-#define ERR_GENERATE(error)               ERR_CONTEXTUALIZE(UNIT_ERR_CONTEXT,(error)) //!< UNIT_ERR_CONTEXT is set on the .c file and is specific to a .c file. It will contain an eERRORCONTEXTS
+#define ERR_CONTEXTUALIZE(context,error)  ( (error) != ERR_NONE ? (eERRORRESULT)(ERR_ERROR_CONTEXT_Set(context) | ERR_ERROR_Set(error)) : ERR_NONE ) //!< Combine the context and the error. Will be simplified at compile time if error is fixed
+#define ERR_GENERATE(error)               ERR_CONTEXTUALIZE(UNIT_ERR_CONTEXT,(error))                                           //!< UNIT_ERR_CONTEXT is set on the .c file and is specific to a .c file. It will contain an eERRORCONTEXTS
 
 //------------------------------------------------------------------------------
 
 
 
+//**********************************************************************************************************************************************************
 //********************************************************************************************************************
 // Contexts definitions
 //********************************************************************************************************************
 // WARNING! Here after use the X-Macros. See on Internet how it works before modifying something
-#define CONTEXTS_TABLE                                  \
-/*  //--- No specific context ---                     */\
-    X(ERRCONTEXT_NO_CONTEXT    , 0x00, "No context"   ) \
-/*  //--- Contexts list ---                           */\
-    X(ERRCONTEXT__TIMERTICKS   ,     , "TimerTicks"   ) \
-    X(ERRCONTEXT__INTERNALSTATE,     , "InternalState") \
-    X(ERRCONTEXT__EEPROM       ,     , "EEPROM"       )
+#define CONTEXTS_TABLE                                   \
+/*  //--- No specific context ---                      */\
+    X(ERRCONTEXT_NO_CONTEXT    , =   0, "No context"   ) \
+/*  //--- Contexts list ---                            */\
+    X(ERRCONTEXT__TIMERTICKS   ,      , "TimerTicks"   ) \
+    X(ERRCONTEXT__INTERNALSTATE,      , "InternalState") \
+    X(ERRCONTEXT__EEPROM       ,      , "EEPROM"       )
 
 //------------------------------------------------------------------------------
 
 //! Function's return errors context enumerator
 typedef enum
 {
-# define X(eName, val, str) eName, //eName = val,
-    CONTEXTS_TABLE
-# undef X
-    ERRCONTEXT__CONTEXTS_MAX, // Keep here
-    ERRCONTEXT__ENUM_MAX_16BITS = 0xFFFF, // Here to force 16-bit enum
+#ifdef USE_REDUCED_ERRORS_VALUE
+#  define X(eName, val, str) eName,
+#else
+#  define X(eName, val, str) eName val, //eName = val,
+#endif
+  CONTEXTS_TABLE
+#undef X
+  ERRCONTEXT__CONTEXTS_MAX, // Keep here
+  ERRCONTEXT__ENUM_MAX_16BITS = 0xFFFF, // Here to force 16-bit enum
 } eERRORCONTEXTS;
+
+#define X(eName, val, str) +1
+#define ERRCONTEXT__CONTEXTS_COUNT  ( 0 CONTEXTS_TABLE )
+#undef X
 
 //------------------------------------------------------------------------------
 
 //! Errors context string table
+#ifdef USE_ERRORS_STRING
+//! Errors string table
 static const char* const ERRCONTEXT_ContextStrings[] =
 {
-# define X(eName, val, str) [eName] = str,
-    CONTEXTS_TABLE
-# undef X
+#define X(eName, val, str) [eName] = str,
+  CONTEXTS_TABLE
+#undef X
 };
+#endif
 
 //------------------------------------------------------------------------------
 
 
 
+//**********************************************************************************************************************************************************
 //********************************************************************************************************************
 // Errors definitions
 //********************************************************************************************************************
 // WARNING! Here after use the X-Macros. See on Internet how it works before modifying something
 #define ERRORS_TABLE                                                                              \
-/*  // --- Success ---                                                                          */\
-    X(ERR_OK                   , =   0, "Succeeded"                                             ) \
-/*  // --- General errors ---                                                                   */\
+/*  //--- Success ---                                                                           */\
+    X(ERR_NONE                 , =   0, "Succeeded"                                             ) \
+/*  //--- General errors ---                                                                    */\
     X(ERR__NO_DEVICE_DETECTED  ,      , "No device detected"                                    ) \
     X(ERR__OUT_OF_RANGE        ,      , "Value out of range"                                    ) \
     X(ERR__UNKNOWN_ELEMENT     ,      , "Unknown element (type or value)"                       ) \
@@ -270,7 +283,9 @@ static const char* const ERRCONTEXT_ContextStrings[] =
 /*  // Test error                                                                               */\
     X(ERR__TEST_ERROR          , = 255, "Test error"                                            )
 
+#define ERR_OK  ERR_NONE //!< For backward compatibility
 
+//------------------------------------------------------------------------------
 
 //! Function's return error enumerator
 typedef enum
@@ -285,18 +300,21 @@ typedef enum
   ERR__ERRORS_MAX, // Keep last
 } eERRORRESULT;
 
+#define X(eName, val, str) +1
+#define ERR__ERRORS_COUNT  ( 0 ERRORS_TABLE )
+#undef X
+
+//------------------------------------------------------------------------------
 
 #ifdef USE_ERRORS_STRING
 //! Errors string table
 static const char* const ERR_ErrorStrings[] =
 {
-#  define X(a, b, c) [a]=c,
+#define X(a, b, c) [a]=c,
   ERRORS_TABLE
-#  undef X
+#undef X
 };
 #endif
-
-
 
 //------------------------------------------------------------------------------
 //! @}
