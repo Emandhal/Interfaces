@@ -39,14 +39,19 @@
 //=============================================================================
 
 //-----------------------------------------------------------------------------
+#include <stdio.h>
 #include "ErrorsDef.h"
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
-extern "C" {
+   extern "C" {
 #  define UART_MEMBER(name)
 #else
 #  define UART_MEMBER(name)  .name =
 #endif
+//-----------------------------------------------------------------------------
+
+#define UART_NO_ERROR  0
+
 //-----------------------------------------------------------------------------
 
 
@@ -56,8 +61,10 @@ extern "C" {
 //********************************************************************************************************************
 // UART Interface functions definitions
 //********************************************************************************************************************
+
 typedef struct UART_Interface UART_Interface; //! Typedef of UART_Interface device object structure
 
+//-----------------------------------------------------------------------------
 
 /*! @brief Interface function for UART transmit
  *
@@ -69,7 +76,7 @@ typedef struct UART_Interface UART_Interface; //! Typedef of UART_Interface devi
  * @param[out] *actuallySent Is the count of data actually sent to the transmit FIFO
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*UARTtryTransmit_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallySent);
+typedef eERRORRESULT (*UARTtransmit_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallySent);
 
 
 /*! @brief Interface function for UART receive
@@ -78,29 +85,21 @@ typedef eERRORRESULT (*UARTtryTransmit_Func)(UART_Interface *pIntDev, uint8_t *d
  * @param[out] *data Is where the data will be stored
  * @param[in] size Is the count of data that the data buffer can hold
  * @param[out] *actuallyReceived Is the count of data actually received from the received FIFO
- * @param[out] *lastCharError Is the last char received error. Set to 0 if no errors
+ * @param[out] *lastCharError Is the last char received error. Set to UART_NO_ERROR (0) if no errors
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*UARTReceive_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallyReceived, uint8_t *lastCharError);
+typedef eERRORRESULT (*UARTreceive_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallyReceived, uint8_t *lastCharError);
 
 //-----------------------------------------------------------------------------
-
-
 
 //! @brief UART interface container structure
 struct UART_Interface
 {
-  void *InterfaceDevice;                //!< This is the pointer that will be in the first parameter of all interface call functions
-  UARTtryTransmit_Func fnUART_Transmit; //!< This function will be called when a driver/library needs to transmit data
-  UARTReceive_Func fnUART_Receive;      //!< This function will be called when a driver/library needs to receive data
-  uint8_t Channel;                      //!< UART channel of the interface device
+  void* InterfaceDevice;             //!< This is the pointer that will be in the first parameter of all interface call functions
+  UARTtransmit_Func fnUART_Transmit; //!< This function will be called when a driver/library needs to transmit data
+  UARTreceive_Func fnUART_Receive;   //!< This function will be called when a driver/library needs to receive data
+  uint8_t Channel;                   //!< UART channel of the interface device
 };
-
-//-----------------------------------------------------------------------------
-
-
-
-
 
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
