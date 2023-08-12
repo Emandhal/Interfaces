@@ -9,7 +9,7 @@
  ******************************************************************************/
  /* @page License
  *
- * Copyright (c) 2020-2022 Fabien MAILLY
+ * Copyright (c) 2020-2023 Fabien MAILLY
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -96,11 +96,11 @@ typedef enum
 #define I2C_TRANSFER_TYPE_Mask               (0x7u << I2C_TRANSFER_TYPE_Pos)
 #define I2C_TRANSFER_TYPE_SET(value)         (((uint16_t)(value) << I2C_TRANSFER_TYPE_Pos) & I2C_TRANSFER_TYPE_Mask) //!< Set transfer type
 #define I2C_TRANSFER_TYPE_GET(value)         (((uint16_t)(value) & I2C_TRANSFER_TYPE_Mask) >> I2C_TRANSFER_TYPE_Pos) //!< Get transfer type
-#define I2C_FIRST_TRANSFER                   (0x1u << 0) //!< First part of a dual transfer
-#define I2C_IS_FIRST_TRANSFER(value)         ( ((uint16_t)(value) & I2C_FIRST_TRANSFER) > 0 ) //!< Is first part of a dual transfer?
-#define I2C_SECOND_TRANSFER                  (0x1u << 1) //!< Second part of a dual transfer
-#define I2C_IS_SECOND_TRANSFER(value)        ( ((uint16_t)(value) & I2C_SECOND_TRANSFER) > 0 ) //!< Is second part of a dual transfer?
-#define I2C_SECOND_TRANSFER_WRITE            (0x1u << 2) //!< Second part of a dual transfer will be a write
+#define I2C_FIRST_TRANSFER                   (0x1u << 0)                                             //!< First part of a dual transfer
+#define I2C_IS_FIRST_TRANSFER(value)         ( ((uint16_t)(value) & I2C_FIRST_TRANSFER) > 0 )        //!< Is first part of a dual transfer?
+#define I2C_SECOND_TRANSFER                  (0x1u << 1)                                             //!< Second part of a dual transfer
+#define I2C_IS_SECOND_TRANSFER(value)        ( ((uint16_t)(value) & I2C_SECOND_TRANSFER) > 0 )       //!< Is second part of a dual transfer?
+#define I2C_SECOND_TRANSFER_WRITE            (0x1u << 2)                                             //!< Second part of a dual transfer will be a write
 #define I2C_IS_SECOND_TRANSFER_WRITE(value)  ( ((uint16_t)(value) & I2C_SECOND_TRANSFER_WRITE) > 0 ) //!< Is second part of a dual transfer a write?
 
 #define I2C_USE_NON_BLOCKING                 (0x1u << 3) //!< Use a non-blocking transfer (with DMA or interrupt transfer)
@@ -128,8 +128,8 @@ typedef enum
 #define I2C_TRANSACTION_NUMBER_SET(value)  (((uint16_t)(value) & I2C_TRANSACTION_NUMBER_Mask) << I2C_TRANSACTION_NUMBER_Pos) //!< Set transaction number
 #define I2C_TRANSACTION_NUMBER_GET(value)  (((uint16_t)(value) >> I2C_TRANSACTION_NUMBER_Pos) & I2C_TRANSACTION_NUMBER_Mask) //!< Get transaction number
 
-#define I2C_USE_10bits_ADDRESS             (0x1u << 31) //!< Use a 10-bits chip address
-#define I2C_USE_8bits_ADDRESS              (0x0u << 31) //!< Use a 8-bits chip address
+#define I2C_USE_10BITS_ADDRESS             (0x1u << 31) //!< Use a 10-bits chip address
+#define I2C_USE_8BITS_ADDRESS              (0x0u << 31) //!< Use a 8-bits chip address
 
 //-----------------------------------------------------------------------------
 
@@ -157,7 +157,7 @@ typedef struct
 //! Prepare I2C packet description to check component with a 8-bits device address
 #define I2C_INTERFACE8_NO_DATA_DESC(chipAddr)                                                                             \
   {                                                                                                                       \
-    I2C_MEMBER(Config.Value) I2C_BLOCKING | I2C_USE_8bits_ADDRESS                                                         \
+    I2C_MEMBER(Config.Value) I2C_BLOCKING | I2C_USE_8BITS_ADDRESS                                                         \
                            | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(I2C_SIMPLE_TRANSFER), \
     I2C_MEMBER(ChipAddr    ) (chipAddr),                                                                                  \
     I2C_MEMBER(Start       ) true,                                                                                        \
@@ -169,7 +169,7 @@ typedef struct
 //! Prepare I2C packet description to check the DMA status with a 8-bits device address
 #define I2C_INTERFACE8_CHECK_DMA_DESC(chipAddr,transactionNumber)                                                            \
   {                                                                                                                          \
-    I2C_MEMBER(Config.Value) I2C_USE_NON_BLOCKING | I2C_USE_8bits_ADDRESS | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE)   \
+    I2C_MEMBER(Config.Value) I2C_USE_NON_BLOCKING | I2C_USE_8BITS_ADDRESS | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE)   \
                            | I2C_TRANSFER_TYPE_SET(I2C_SIMPLE_TRANSFER) | I2C_TRANSACTION_NUMBER_SET(CurrTransactionNumber), \
     I2C_MEMBER(ChipAddr    ) (chipAddr) | I2C_READ_ORMASK,                                                                   \
     I2C_MEMBER(Start       ) true,                                                                                           \
@@ -181,7 +181,7 @@ typedef struct
 //! Prepare I2C packet description to transmit bytes with a 8-bits device address
 #define I2C_INTERFACE8_TX_DATA_DESC(chipAddr,start,txData,size,stop,transferType)                                  \
   {                                                                                                                \
-    I2C_MEMBER(Config.Value) I2C_BLOCKING | I2C_USE_8bits_ADDRESS                                                  \
+    I2C_MEMBER(Config.Value) I2C_BLOCKING | I2C_USE_8BITS_ADDRESS                                                  \
                            | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(transferType), \
     I2C_MEMBER(ChipAddr    ) (chipAddr) & I2C_WRITE_ANDMASK,                                                       \
     I2C_MEMBER(Start       ) (start),                                                                              \
@@ -193,7 +193,7 @@ typedef struct
 //! Prepare I2C packet description to receive bytes with a 8-bits device address
 #define I2C_INTERFACE8_RX_DATA_DESC(chipAddr,start,rxData,size,stop,transferType)                                  \
   {                                                                                                                \
-    I2C_MEMBER(Config.Value) I2C_BLOCKING | I2C_USE_8bits_ADDRESS                                                  \
+    I2C_MEMBER(Config.Value) I2C_BLOCKING | I2C_USE_8BITS_ADDRESS                                                  \
                            | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(transferType), \
     I2C_MEMBER(ChipAddr    ) (chipAddr) | I2C_READ_ORMASK,                                                         \
     I2C_MEMBER(Start       ) (start),                                                                              \
