@@ -1,8 +1,8 @@
 /*!*****************************************************************************
  * @file    SPI_Interface.h
  * @author  Fabien 'Emandhal' MAILLY
- * @version 1.0.0
- * @date    02/10/2021
+ * @version 1.1.0
+ * @date    27/08/2023
  * @brief   SPI interface for driver
  * @details This SPI interface definitions for all the https://github.com/Emandhal
  * drivers and developments
@@ -31,6 +31,8 @@
  *****************************************************************************/
 
 /* Revision history:
+ * 1.1.1    Add specific for STM32cubeIDE
+ * 1.1.0    Add specific for Arduino, change SPI_MODEs names to comply with Arduino library
  * 1.0.0    Release version
  *****************************************************************************/
 #ifndef __SPI_INTERFACE_H_INC
@@ -46,10 +48,18 @@
 #include "ErrorsDef.h"
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
-extern "C" {
+#  ifdef ARDUINO
+#    include <Arduino.h>
+#    include <SPI.h>
+#  endif
 #  define SPI_MEMBER(name)
+extern "C" {
 #else
 #  define SPI_MEMBER(name)  .name =
+#endif
+//-----------------------------------------------------------------------------
+#ifdef USE_HAL_DRIVER // STM32cubeIDE
+#  include <Main.h> // To get the MCU general defines
 #endif
 //-----------------------------------------------------------------------------
 
@@ -68,7 +78,8 @@ typedef union SPI_Conf
   struct
   {
     uint16_t UseDummyByte   : 1; //!<  0    - Use dummy byte for receiving: 'true' = use the DummyByte member for all bytes to receive ; 'false' = Use TxData for all bytes to receive
-    uint16_t                : 2; //!<  1- 2
+    uint16_t BlockInterrupts: 1; //!<  1    - Block the interrupts for this transfer: 'true' = disable all interrupts before CS low and enable all interrupts after CS high ; 'false' = no enable and/or disable of interrupts
+    uint16_t                : 1; //!<  2
     uint16_t IsNonBlocking  : 1; //!<  3    - Non blocking use for the SPI: '1' = The driver ask for a non-blocking tansfer (with DMA or interrupt transfer) ; '0' = The driver ask for a blocking transfer
     uint16_t EndianResult   : 3; //!<  4- 6 - If the transfer changes the endianness, the peripheral that do the transfer will say it here
     uint16_t EndianTransform: 3; //!<  7- 9 - The driver that asks for the transfer needs an endian change from little to big-endian or big to little-endian
@@ -76,10 +87,11 @@ typedef union SPI_Conf
   } Bits;
 } SPI_Conf;
 
-#define SPI_USE_DUMMYBYTE_FOR_RECEIVE  (0x1u << 0) //!< Use dummy byte for receiving
-#define SPI_USE_TXDATA_FOR_RECEIVE     (0x0u << 0) //!< Use TxData for receiving
-#define SPI_USE_NON_BLOCKING           (0x1u << 3) //!< Use a non-blocking transfer (with DMA or interrupt transfer)
-#define SPI_BLOCKING                   (0x0u << 3) //!< Use a blocking transfer
+#define SPI_USE_DUMMYBYTE_FOR_RECEIVE     (0x1u << 0) //!< Use dummy byte for receiving
+#define SPI_USE_TXDATA_FOR_RECEIVE        (0x0u << 0) //!< Use TxData for receiving
+#define SPI_BLOCK_INTERRUPTS_ON_TRANSFER  (0x1u << 1) //!< Use enable and/or disable of interrupts
+#define SPI_USE_NON_BLOCKING              (0x1u << 3) //!< Use a non-blocking transfer (with DMA or interrupt transfer)
+#define SPI_BLOCKING                      (0x0u << 3) //!< Use a blocking transfer
 
 //! Endianness transform enum
 typedef enum
@@ -102,6 +114,8 @@ typedef enum
 #define SPI_TRANSACTION_NUMBER_Mask        (0x3Fu)
 #define SPI_TRANSACTION_NUMBER_SET(value)  (((uint16_t)(value) & SPI_TRANSACTION_NUMBER_Mask) << SPI_TRANSACTION_NUMBER_Pos) //!< Set transaction number
 #define SPI_TRANSACTION_NUMBER_GET(value)  (((uint16_t)(value) >> SPI_TRANSACTION_NUMBER_Pos) & SPI_TRANSACTION_NUMBER_Mask) //!< Get transaction number
+
+#define SPI_IS_BLOCK_INTERRUPTS_ON_TRANSFER(value)  (((value) & SPI_BLOCK_INTERRUPTS_ON_TRANSFER) > 0) //!< Is the value has the #SPI_BLOCK_INTERRUPTS_ON_TRANSFER bit defined?
 
 //-----------------------------------------------------------------------------
 
@@ -128,17 +142,17 @@ typedef struct
 //********************************************************************************************************************
 
 //! Prepare SPI packet description to check the DMA status
-#define SPI_INTERFACE_CHECK_DMA_DESC(transactionNumber)                                          \
-{                                                                                                \
-  SPI_MEMBER(Config.Value) SPI_USE_NON_BLOCKING | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE) \
-                         | SPI_TRANSACTION_NUMBER_SET(transactionNumber),                        \
-  SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                                 \
-  SPI_MEMBER(DummyByte   ) 0x00,                                                                 \
-  SPI_MEMBER(TxData      ) NULL,                                                                 \
-  SPI_MEMBER(RxData      ) NULL,                                                                 \
-  SPI_MEMBER(DataSize    ) 0,                                                                    \
-  SPI_MEMBER(Terminate   ) true,                                                                 \
-}
+#define SPI_INTERFACE_CHECK_DMA_DESC(transactionNumber)                                            \
+  {                                                                                                \
+    SPI_MEMBER(Config.Value) SPI_USE_NON_BLOCKING | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE) \
+                           | SPI_TRANSACTION_NUMBER_SET(transactionNumber),                        \
+    SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                                 \
+    SPI_MEMBER(DummyByte   ) 0x00,                                                                 \
+    SPI_MEMBER(TxData      ) NULL,                                                                 \
+    SPI_MEMBER(RxData      ) NULL,                                                                 \
+    SPI_MEMBER(DataSize    ) 0,                                                                    \
+    SPI_MEMBER(Terminate   ) true,                                                                 \
+  }
 
 //! Prepare SPI packet description to transmit bytes
 #define SPI_INTERFACE_TX_DATA_DESC(txData,size,terminate)                                   \
@@ -216,10 +230,10 @@ typedef struct SPI_Interface SPI_Interface; //! Typedef of SPI_Interface device 
 //! SPI bit width and mode enumerator
 typedef enum
 {
-  SPI_MODE0                = SPI_MSB_FIRST | SPI_COMM_MODE0 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 0) and data MSB first
-  SPI_MODE1                = SPI_MSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 1) and data MSB first
-  SPI_MODE2                = SPI_MSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 2) and data MSB first
-  SPI_MODE3                = SPI_MSB_FIRST | SPI_COMM_MODE3 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 3) and data MSB first
+  STD_SPI_MODE0            = SPI_MSB_FIRST | SPI_COMM_MODE0 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 0) and data MSB first
+  STD_SPI_MODE1            = SPI_MSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 1) and data MSB first
+  STD_SPI_MODE2            = SPI_MSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 2) and data MSB first
+  STD_SPI_MODE3            = SPI_MSB_FIRST | SPI_COMM_MODE3 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 3) and data MSB first
   DUAL_SPI_MODE0           = SPI_MSB_FIRST | SPI_COMM_MODE0 | SPI_PIN_COUNT_SET(2), //!< Communication with device using 2 bits per clock (Dual-SPI mode 0) and data MSB first
   DUAL_SPI_MODE1           = SPI_MSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(2), //!< Communication with device using 2 bits per clock (Dual-SPI mode 1) and data MSB first
   DUAL_SPI_MODE2           = SPI_MSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(2), //!< Communication with device using 2 bits per clock (Dual-SPI mode 2) and data MSB first
@@ -228,10 +242,10 @@ typedef enum
   QUAD_SPI_MODE1           = SPI_MSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(4), //!< Communication with device using 4 bits per clock (Quad-SPI mode 1) and data MSB first
   QUAD_SPI_MODE2           = SPI_MSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(4), //!< Communication with device using 4 bits per clock (Quad-SPI mode 2) and data MSB first
   QUAD_SPI_MODE3           = SPI_MSB_FIRST | SPI_COMM_MODE3 | SPI_PIN_COUNT_SET(4), //!< Communication with device using 4 bits per clock (Quad-SPI mode 3) and data MSB first
-  SPI_MODE0_LSB_FIRST      = SPI_LSB_FIRST | SPI_COMM_MODE0 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 0) and data LSB first
-  SPI_MODE1_LSB_FIRST      = SPI_LSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 1) and data LSB first
-  SPI_MODE2_LSB_FIRST      = SPI_LSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 2) and data LSB first
-  SPI_MODE3_LSB_FIRST      = SPI_LSB_FIRST | SPI_COMM_MODE3 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 3) and data LSB first
+  STD_SPI_MODE0_LSB_FIRST  = SPI_LSB_FIRST | SPI_COMM_MODE0 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 0) and data LSB first
+  STD_SPI_MODE1_LSB_FIRST  = SPI_LSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 1) and data LSB first
+  STD_SPI_MODE2_LSB_FIRST  = SPI_LSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 2) and data LSB first
+  STD_SPI_MODE3_LSB_FIRST  = SPI_LSB_FIRST | SPI_COMM_MODE3 | SPI_PIN_COUNT_SET(1), //!< Communication with device using 1 bit per clock (Standard SPI mode 3) and data LSB first
   DUAL_SPI_MODE0_LSB_FIRST = SPI_LSB_FIRST | SPI_COMM_MODE0 | SPI_PIN_COUNT_SET(2), //!< Communication with device using 2 bits per clock (Dual-SPI mode 0) and data LSB first
   DUAL_SPI_MODE1_LSB_FIRST = SPI_LSB_FIRST | SPI_COMM_MODE1 | SPI_PIN_COUNT_SET(2), //!< Communication with device using 2 bits per clock (Dual-SPI mode 1) and data LSB first
   DUAL_SPI_MODE2_LSB_FIRST = SPI_LSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(2), //!< Communication with device using 2 bits per clock (Dual-SPI mode 2) and data LSB first
@@ -241,6 +255,9 @@ typedef enum
   QUAD_SPI_MODE2_LSB_FIRST = SPI_LSB_FIRST | SPI_COMM_MODE2 | SPI_PIN_COUNT_SET(4), //!< Communication with device using 4 bits per clock (Quad-SPI mode 2) and data LSB first
   QUAD_SPI_MODE3_LSB_FIRST = SPI_LSB_FIRST | SPI_COMM_MODE3 | SPI_PIN_COUNT_SET(4), //!< Communication with device using 4 bits per clock (Quad-SPI mode 3) and data LSB first
 } eSPIInterface_Mode;
+
+#define SPI_IS_LSB_FIRST(value)  (((value) & SPI_LSB_FIRST) > 0) //!< Is the value has the #SPI_LSB_FIRST bit defined?
+#define SPI_MODE_GET(value)      (((value) & SPI_CPHA_Pos) >> SPI_CPHA_Pos) //!< Get the SPI mode value
 
 //-----------------------------------------------------------------------------
 
@@ -254,7 +271,6 @@ typedef enum
  * @return Returns an #eERRORRESULT value enum
  */
 typedef eERRORRESULT (*SPIInit_Func)(SPI_Interface *pIntDev, uint8_t chipSelect, eSPIInterface_Mode mode, const uint32_t sckFreq);
-
 
 /*! @brief Interface packet function for SPI peripheral transfer
  *
@@ -270,7 +286,30 @@ typedef eERRORRESULT (*SPITransferPacket_Func)(SPI_Interface *pIntDev, SPIInterf
 
 //-----------------------------------------------------------------------------
 
-//! @brief SPI interface container structure
+#ifdef ARDUINO
+//! @brief Arduino SPI interface container structure
+struct SPI_Interface
+{
+  SPISettings _SPIsettings;              //!< Arduino SPI settings
+  SPIClass& _SPIclass;                   //!< Arduino SPI class
+  SPIInit_Func fnSPI_Init;               //!< This function will be called at driver initialization to configure the interface driver
+  SPITransferPacket_Func fnSPI_Transfer; //!< This function will be called at driver read/write data from/to the interface driver SPI
+};
+
+#elif defined(USE_HAL_DRIVER) //#ifdef STM32cubeIDE
+//! @brief STM32 HAL SPI interface container structure
+struct SPI_Interface
+{
+  SPI_HandleTypeDef* pHSPI;              //!< Pointer to SPI handle Structure definition
+  SPIInit_Func fnSPI_Init;               //!< This function will be called at driver initialization to configure the interface driver
+  SPITransferPacket_Func fnSPI_Transfer; //!< This function will be called at driver read/write data from/to the interface driver SPI
+  GPIO_TypeDef* pGPIOx;                  //!< Pointer to General Purpose I/O register
+  uint16_t GPIOpin;                      //!< General Purpose I/O pin number
+  uint32_t SPItimeout;                   //!< SPI timeout
+};
+
+#else
+//! @brief Generic SPI interface container structure
 struct SPI_Interface
 {
   void *InterfaceDevice;                 //!< This is the pointer that will be in the first parameter of all interface call functions
@@ -279,6 +318,7 @@ struct SPI_Interface
   SPITransferPacket_Func fnSPI_Transfer; //!< This function will be called when the driver needs to transfer data over the SPI communication with the device
   uint8_t Channel;                       //!< SPI channel of the interface device in case of multiple virtual SPI channels (This is not the ChipSelect)
 };
+#endif //#ifdef ARDUINO && USE_HAL_DRIVER
 
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
