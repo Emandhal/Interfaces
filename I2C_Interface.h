@@ -185,7 +185,7 @@ typedef struct
                            | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(transferType), \
     I2C_MEMBER(ChipAddr    ) (chipAddr) & I2C_WRITE_ANDMASK,                                                       \
     I2C_MEMBER(Start       ) (start),                                                                              \
-    I2C_MEMBER(pBuffer     ) (txData),                                                                             \
+    I2C_MEMBER(pBuffer     ) (uint8_t*)(txData),                                                                             \
     I2C_MEMBER(BufferSize  ) (size),                                                                               \
     I2C_MEMBER(Stop        ) (stop),                                                                               \
   }
@@ -197,7 +197,7 @@ typedef struct
                            | I2C_ENDIAN_TRANSFORM_SET(I2C_NO_ENDIAN_CHANGE) | I2C_TRANSFER_TYPE_SET(transferType), \
     I2C_MEMBER(ChipAddr    ) (chipAddr) | I2C_READ_ORMASK,                                                         \
     I2C_MEMBER(Start       ) (start),                                                                              \
-    I2C_MEMBER(pBuffer     ) (rxData),                                                                             \
+    I2C_MEMBER(pBuffer     ) (uint8_t*)(rxData),                                                                             \
     I2C_MEMBER(BufferSize  ) (size),                                                                               \
     I2C_MEMBER(Stop        ) (stop),                                                                               \
   }

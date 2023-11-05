@@ -160,7 +160,7 @@ typedef struct
     SPI_MEMBER(Config.Value) SPI_BLOCKING | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE), \
     SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                          \
     SPI_MEMBER(DummyByte   ) 0x00,                                                          \
-    SPI_MEMBER(TxData      ) txData,                                                        \
+    SPI_MEMBER(TxData      ) (uint8_t*)txData,                                              \
     SPI_MEMBER(RxData      ) NULL,                                                          \
     SPI_MEMBER(DataSize    ) size,                                                          \
     SPI_MEMBER(Terminate   ) terminate,                                                     \
@@ -172,8 +172,8 @@ typedef struct
     SPI_MEMBER(Config.Value) SPI_BLOCKING | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE), \
     SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                          \
     SPI_MEMBER(DummyByte   ) 0x00,                                                          \
-    SPI_MEMBER(TxData      ) data,                                                          \
-    SPI_MEMBER(RxData      ) data,                                                          \
+    SPI_MEMBER(TxData      ) (uint8_t*)data,                                                \
+    SPI_MEMBER(RxData      ) (uint8_t*)data,                                                \
     SPI_MEMBER(DataSize    ) size,                                                          \
     SPI_MEMBER(Terminate   ) terminate,                                                     \
   }
@@ -185,7 +185,7 @@ typedef struct
     SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                                                          \
     SPI_MEMBER(DummyByte   ) dummyByte,                                                                                     \
     SPI_MEMBER(TxData      ) NULL,                                                                                          \
-    SPI_MEMBER(RxData      ) rxData,                                                                                        \
+    SPI_MEMBER(RxData      ) (uint8_t*)rxData,                                                                              \
     SPI_MEMBER(DataSize    ) size,                                                                                          \
     SPI_MEMBER(Terminate   ) terminate,                                                                                     \
   }
