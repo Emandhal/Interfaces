@@ -275,6 +275,7 @@ static const char* const ERRCONTEXT_ContextStrings[] =
     X(ERR__I2C_OTHER_BUSY      ,      , "I2C busy by other transfer"                            ) \
 /*  // DMA errors                                                                               */\
     X(ERR__DMA_NOT_CONFIGURED  , = 225, "DMA not configured"                                    ) \
+    X(ERR__DMA_PARAMETER_ERROR ,      , "DMA parameter error"                                   ) \
     X(ERR__DMA_ERROR           ,      , "DMA error"                                             ) \
     X(ERR__DMA_OVERFLOW_ERROR  ,      , "DMA overflow error"                                    ) \
     X(ERR__DMA_UNDERFLOW_ERROR ,      , "DMA underflow error"                                   ) \

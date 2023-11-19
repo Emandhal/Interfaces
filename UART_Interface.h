@@ -49,6 +49,10 @@
 #  define UART_MEMBER(name)  .name =
 #endif
 //-----------------------------------------------------------------------------
+#ifdef USE_HAL_DRIVER // STM32cubeIDE
+#  include <Main.h> // To get the MCU general defines
+#endif
+//-----------------------------------------------------------------------------
 
 #define UART_NO_ERROR  0
 
@@ -76,7 +80,7 @@ typedef struct UART_Interface UART_Interface; //! Typedef of UART_Interface devi
  * @param[out] *actuallySent Is the count of data actually sent to the transmit FIFO
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*UARTtransmit_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallySent);
+typedef eERRORRESULT (*UARTtransmit_Func)(UART_Interface *pIntDev, const uint8_t* data, size_t size, size_t*const actuallySent);
 
 
 /*! @brief Interface function for UART receive
@@ -88,10 +92,20 @@ typedef eERRORRESULT (*UARTtransmit_Func)(UART_Interface *pIntDev, uint8_t *data
  * @param[out] *lastCharError Is the last char received error. Set to UART_NO_ERROR (0) if no errors
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*UARTreceive_Func)(UART_Interface *pIntDev, uint8_t *data, size_t size, size_t *actuallyReceived, uint8_t *lastCharError);
+typedef eERRORRESULT (*UARTreceive_Func)(UART_Interface *pIntDev, uint8_t* data, size_t size, size_t*const actuallyReceived, uint8_t*const lastCharError);
 
 //-----------------------------------------------------------------------------
 
+#if defined(USE_HAL_DRIVER) //#ifdef STM32cubeIDE
+//! @brief STM32 HAL UART interface container structure
+struct UART_Interface
+{
+  UART_HandleTypeDef* pHUART;        //!< Pointer to UART handle Structure definition
+  UARTtransmit_Func fnUART_Transmit; //!< This function will be called at driver initialization to configure the interface driver
+  UARTreceive_Func fnUART_Receive;   //!< This function will be called at driver read/write data from/to the interface driver SPI
+};
+
+#else
 //! @brief UART interface container structure
 struct UART_Interface
 {
@@ -100,6 +114,7 @@ struct UART_Interface
   UARTreceive_Func fnUART_Receive;   //!< This function will be called when a driver/library needs to receive data
   uint8_t Channel;                   //!< UART channel of the interface device
 };
+#endif //#ifdef USE_HAL_DRIVER
 
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
