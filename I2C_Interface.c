@@ -52,7 +52,7 @@ eERRORRESULT Interface_I2Cinit(I2C_Interface* pIntDev, const uint32_t sclFreq)
 //-----------------------------------------------------------------------------
 
 
-#ifdef USE_HAL_DRIVER // STM32cubeIDE
+#if defined(USE_HAL_DRIVER) || defined(USE_FULL_LL_DRIVER) // STM32cubeIDE
 //=============================================================================
 // Function for I2C driver initialization with STM32cubeIDE
 //=============================================================================
@@ -65,7 +65,7 @@ eERRORRESULT Interface_I2Cinit(I2C_Interface* pIntDev, const uint32_t sclFreq)
   (void)sclFreq;
   return ERR_NONE;
 }
-#endif // #ifdef USE_HAL_DRIVER // STM32cubeIDE
+#endif // #if defined(USE_HAL_DRIVER) || defined(USE_FULL_LL_DRIVER) // STM32cubeIDE
 
 //-----------------------------------------------------------------------------
 
@@ -93,7 +93,10 @@ eERRORRESULT Interface_I2Ctransfer(I2C_Interface *pIntDev, I2CInterface_Packet* 
 //-----------------------------------------------------------------------------
 
 
-#ifdef USE_HAL_DRIVER // STM32cubeIDE
+
+
+
+#if defined(USE_HAL_DRIVER) && defined(STM32G4xx_HAL_I2C_H) // STM32cubeIDE with HAL
 //=============================================================================
 // [STATIC] Wait for a proper I2C status
 //=============================================================================
@@ -173,7 +176,7 @@ static eERRORRESULT __I2CHALstatusToERRORRESULT(HAL_StatusTypeDef halError)
 
 
 //=============================================================================
-// Function for I2C transfer with STM32cubeIDE
+// Function for I2C transfer with STM32cubeIDE and HAL driver
 //=============================================================================
 eERRORRESULT Interface_I2Ctransfer(I2C_Interface *pIntDev, I2CInterface_Packet* const pPacketDesc)
 {
@@ -216,7 +219,118 @@ eERRORRESULT Interface_I2Ctransfer(I2C_Interface *pIntDev, I2CInterface_Packet* 
   }
   return __I2CerrorCodeToERRORRESULT(HAL_I2C_GetError(pIntDev->pHI2C));
 }
-#endif // #ifdef USE_HAL_DRIVER // STM32cubeIDE
+#endif // #if defined(USE_HAL_DRIVER) && defined(STM32G4xx_HAL_I2C_H) // STM32cubeIDE with HAL
+
+#if defined(USE_FULL_LL_DRIVER) && defined(STM32G4xx_LL_I2C_H) // STM32cubeIDE with LL
+//=============================================================================
+// Function for I2C transfer with STM32cubeIDE and Low Level driver
+//=============================================================================
+eERRORRESULT Interface_I2Ctransfer(I2C_Interface *pIntDev, I2CInterface_Packet* const pPacketDesc)
+{
+#ifdef CHECK_NULL_PARAM
+  if (pIntDev == NULL) return ERR__I2C_PARAMETER_ERROR;
+#endif
+  const bool DeviceWrite = ((pPacketDesc->ChipAddr & 0x01) == 0);
+  const uint16_t ChipAddr = (pPacketDesc->ChipAddr & (I2C_IS_10BITS_ADDRESS(pPacketDesc->ChipAddr) ? I2C_ONLY_ADDR10_Mask : I2C_ONLY_ADDR8_Mask));
+  const uint32_t ChipAddrSize = (I2C_IS_10BITS_ADDRESS(pPacketDesc->ChipAddr) ? LL_I2C_ADDRSLAVE_10BIT : LL_I2C_ADDRSLAVE_7BIT);
+  const uint32_t EndMode = (pPacketDesc->Stop ? LL_I2C_MODE_SOFTEND : LL_I2C_MODE_RELOAD);
+  size_t RemainingBytes = pPacketDesc->BufferSize;
+  uint32_t Timeout = pIntDev->I2Ctimeout;
+
+  //--- Device polling? ---
+  if ((pPacketDesc->pBuffer == NULL) || (pPacketDesc->BufferSize <= 0))                             // Device polling only
+  {
+    Timeout = pIntDev->I2Ctimeout;
+    LL_I2C_HandleTransfer(pIntDev->pHI2C, ChipAddr, ChipAddrSize, 0, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_WRITE);
+    while (true)                                                                                    // Wait the polling to finish
+    {
+      if (LL_I2C_IsActiveFlag_NACK(pIntDev->pHI2C) > 0) return ERR__I2C_NACK;                       // If NACK received, return the error
+      if (LL_I2C_IsActiveFlag_STOP(pIntDev->pHI2C) > 0) break;                                      // Wait STOP condition detected
+      if (Timeout == 0) return ERR__I2C_TIMEOUT;                                                    // Timeout? return an error
+      --Timeout;
+    }
+    return ERR_NONE;
+  }
+
+  //--- Endianness configuration for data striding ---
+  const eI2C_EndianTransform EndianTransform = I2C_ENDIAN_TRANSFORM_GET(pPacketDesc->Config.Value); // Only the endianness configuration is important for this driver
+  const size_t BlockSize = (EndianTransform == I2C_NO_ENDIAN_CHANGE ? 1 : (size_t)EndianTransform); // Get block size. No endian change = 8-bits data
+  if ((pPacketDesc->BufferSize % BlockSize) > 0) return ERR__DATA_MODULO;                           // Data block size shall be a multiple of data size
+  size_t CurrentBlockPos = BlockSize;
+
+  //--- Transfer data ---
+  uint8_t* pBuffer = &pPacketDesc->pBuffer[BlockSize - 1];                                          // Adjust the start of data for endianness
+  if (DeviceWrite) // Device write
+  {
+    const uint32_t RequestMode = (pPacketDesc->Start ? LL_I2C_GENERATE_START_WRITE : LL_I2C_GENERATE_NOSTARTSTOP);
+    LL_I2C_HandleTransfer(pIntDev->pHI2C, ChipAddr, ChipAddrSize, RemainingBytes, EndMode, RequestMode);
+    while (true)
+    {
+      if (LL_I2C_IsActiveFlag_NACK(pIntDev->pHI2C) > 0) return ERR__I2C_NACK_DATA;                  // If NACK received, return the error
+      if (LL_I2C_IsActiveFlag_STOP(pIntDev->pHI2C) > 0) break;                                      // STOP condition detected? break
+      if (Timeout == 0) return ERR__I2C_TIMEOUT;                                                    // Timeout? return an error
+      --Timeout;
+      if (LL_I2C_IsActiveFlag_TXE(pIntDev->pHI2C) == 0) continue;                                   // TX not empty? Do another loop
+      Timeout = pIntDev->I2Ctimeout;                                                                // Reset timeout
+
+      if (RemainingBytes == 0) break;                                                               // No data remaining to send, then break the loop
+      LL_I2C_TransmitData8(pIntDev->pHI2C, *pBuffer);                                               // Send next data byte
+      --RemainingBytes;
+      //--- Adjust buffer address with data striding ---
+      --CurrentBlockPos;
+      if (CurrentBlockPos == 0)
+      {
+        pBuffer += (2 * BlockSize) - 1;
+        CurrentBlockPos = BlockSize;
+      }
+      else --pBuffer;
+    }
+  }
+  else // Device read
+  {
+    const uint32_t RequestMode = (pPacketDesc->Start ? LL_I2C_GENERATE_START_READ : LL_I2C_GENERATE_NOSTARTSTOP);
+    LL_I2C_HandleTransfer(pIntDev->pHI2C, ChipAddr, ChipAddrSize, RemainingBytes, EndMode, RequestMode);
+    while (RemainingBytes > 0)
+    {
+      Timeout = pIntDev->I2Ctimeout;                                                                // Reset timeout
+      while (true)
+      {
+        if (LL_I2C_IsActiveFlag_RXNE(pIntDev->pHI2C) > 0) break;                                    // Data received
+        if (Timeout == 0) return ERR__I2C_TIMEOUT;                                                  // Timeout? return an error
+        --Timeout;
+      }
+
+      *pBuffer = LL_I2C_ReceiveData8(pIntDev->pHI2C);                                               // Get next data byte
+      --RemainingBytes;
+      //--- Adjust buffer address with data striding ---
+      --CurrentBlockPos;
+      if (CurrentBlockPos == 0)
+      {
+        pBuffer += (2 * BlockSize) - 1;
+        CurrentBlockPos = BlockSize;
+      }
+      else --pBuffer;
+    }
+  }
+  if (pPacketDesc->Stop)
+  {
+    Timeout = pIntDev->I2Ctimeout;                                                                  // Reset timeout
+    LL_I2C_HandleTransfer(pIntDev->pHI2C, ChipAddr, ChipAddrSize, 0, LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_STOP); // Send a stop
+    while (true)                                                                                    // Wait the stop to finish
+    {
+      if (LL_I2C_IsActiveFlag_STOP(pIntDev->pHI2C) > 0) break;                                      // Wait STOP condition detected
+      if (Timeout == 0) return ERR__I2C_TIMEOUT;                                                    // Timeout? return an error
+      --Timeout;
+    }
+    LL_I2C_ClearFlag_STOP(pIntDev->pHI2C);                                                          // Clear STOP flag
+  }
+
+  //--- Endianness result ---
+  pPacketDesc->Config.Value &= ~I2C_ENDIAN_RESULT_Mask;
+  pPacketDesc->Config.Value |= I2C_ENDIAN_RESULT_SET(EndianTransform);                              // Indicate that the endian transform have been processed
+  return ERR_NONE;
+}
+#endif // #if defined(USE_FULL_LL_DRIVER) && defined(STM32G4xx_LL_I2C_H) // STM32cubeIDE with LL
 
 //-----------------------------------------------------------------------------
 #ifdef __cplusplus
