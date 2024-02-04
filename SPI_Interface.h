@@ -190,6 +190,45 @@ typedef struct
     SPI_MEMBER(Terminate   ) terminate,                                                                                     \
   }
 
+//! Prepare SPI packet description to transmit bytes with DMA
+#define SPI_INTERFACE_TX_DATA_DMA_DESC(txData,useDMA,size,terminate)                        \
+  {                                                                                         \
+    SPI_MEMBER(Config.Value) (useDMA ? I2C_USE_NON_BLOCKING : I2C_BLOCKING)                 \
+                           | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE),                \
+    SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                          \
+    SPI_MEMBER(DummyByte   ) 0x00,                                                          \
+    SPI_MEMBER(TxData      ) (uint8_t*)txData,                                              \
+    SPI_MEMBER(RxData      ) NULL,                                                          \
+    SPI_MEMBER(DataSize    ) size,                                                          \
+    SPI_MEMBER(Terminate   ) terminate,                                                     \
+  }
+
+//! Prepare SPI packet description to transmit bytes (TxData = RxData) with DMA
+#define SPI_INTERFACE_RX_DATA_DMA_DESC(data,useDMA,size,terminate)                          \
+  {                                                                                         \
+    SPI_MEMBER(Config.Value) (useDMA ? I2C_USE_NON_BLOCKING : I2C_BLOCKING)                 \
+                           | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE),                \
+    SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                          \
+    SPI_MEMBER(DummyByte   ) 0x00,                                                          \
+    SPI_MEMBER(TxData      ) (uint8_t*)data,                                                \
+    SPI_MEMBER(RxData      ) (uint8_t*)data,                                                \
+    SPI_MEMBER(DataSize    ) size,                                                          \
+    SPI_MEMBER(Terminate   ) terminate,                                                     \
+  }
+
+//! Prepare SPI packet description to receive data using dummy byte with DMA
+#define SPI_INTERFACE_RX_DATA_DMA_WITH_DUMMYBYTE_DESC(dummyByte,rxData,useDMA,size,terminate)                               \
+  {                                                                                                                         \
+    SPI_MEMBER(Config.Value) (useDMA ? I2C_USE_NON_BLOCKING : I2C_BLOCKING)                                                 \
+                           | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE) | SPI_USE_DUMMYBYTE_FOR_RECEIVE,                \
+    SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                                                          \
+    SPI_MEMBER(DummyByte   ) dummyByte,                                                                                     \
+    SPI_MEMBER(TxData      ) NULL,                                                                                          \
+    SPI_MEMBER(RxData      ) (uint8_t*)rxData,                                                                              \
+    SPI_MEMBER(DataSize    ) size,                                                                                          \
+    SPI_MEMBER(Terminate   ) terminate,                                                                                     \
+  }
+
 //-----------------------------------------------------------------------------
 
 
