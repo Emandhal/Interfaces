@@ -42,7 +42,7 @@ extern "C" {
 eERRORRESULT Interface_I2Cinit(I2C_Interface* pIntDev, const uint32_t sclFreq)
 {
 #ifdef CHECK_NULL_PARAM
-  if (pIntDev == NULL) return ERR__SPI_PARAMETER_ERROR;
+  if (pIntDev == NULL) return ERR__I2C_PARAMETER_ERROR;
 #endif
 
   return ERR_NONE;
@@ -59,7 +59,7 @@ eERRORRESULT Interface_I2Cinit(I2C_Interface* pIntDev, const uint32_t sclFreq)
 eERRORRESULT Interface_I2Cinit(I2C_Interface* pIntDev, const uint32_t sclFreq)
 {
 #ifdef CHECK_NULL_PARAM
-  if (pIntDev == NULL) return ERR__SPI_PARAMETER_ERROR;
+  if (pIntDev == NULL) return ERR__I2C_PARAMETER_ERROR;
 #endif
   (void)pIntDev;
   (void)sclFreq;
@@ -83,7 +83,7 @@ eERRORRESULT Interface_I2Cinit(I2C_Interface* pIntDev, const uint32_t sclFreq)
 eERRORRESULT Interface_I2Ctransfer(I2C_Interface *pIntDev, I2CInterface_Packet* const pPacketDesc)
 {
 #ifdef CHECK_NULL_PARAM
-  if (pIntDev == NULL) return ERR__SPI_PARAMETER_ERROR;
+  if (pIntDev == NULL) return ERR__I2C_PARAMETER_ERROR;
 #endif
 
   return ERR_NONE;
@@ -178,7 +178,7 @@ static eERRORRESULT __I2CHALstatusToERRORRESULT(HAL_StatusTypeDef halError)
 eERRORRESULT Interface_I2Ctransfer(I2C_Interface *pIntDev, I2CInterface_Packet* const pPacketDesc)
 {
 #ifdef CHECK_NULL_PARAM
-  if (pIntDev == NULL) return ERR__SPI_PARAMETER_ERROR;
+  if (pIntDev == NULL) return ERR__I2C_PARAMETER_ERROR;
 #endif
   const bool DeviceWrite = ((pPacketDesc->ChipAddr & 0x01) == 0);
   const uint16_t ChipAddr = (pPacketDesc->ChipAddr & I2C_ONLY_ADDR_Mask);
