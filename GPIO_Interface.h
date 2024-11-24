@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 /* Revision history:
+ * 2.0.0    Add mask to PORT interfaces function
  * 1.1.0    Modify GPIO interface and add PORT interface
  * 1.0.0    Release version
  *****************************************************************************/
@@ -54,6 +55,9 @@ extern "C" {
 #define GPIO_AS_INPUT   1
 #define PORT_AS_OUTPUT  0x00000000
 #define PORT_AS_INPUT   0xFFFFFFFF
+#define PORT_ALL_LOW    0x00000000
+#define PORT_ALL_HIGH   0xFFFFFFFF
+#define PORT_ALL_PINS   0xFFFFFFFF
 
 //-----------------------------------------------------------------------------
 
@@ -65,7 +69,7 @@ extern "C" {
 // PORT Interface functions definitions
 //********************************************************************************************************************
 
-typedef struct PORT_Interface PORT_Interface; //! Typedef of PORT_Interface device object structure
+typedef struct PORT_Interface PORT_Interface; //!< Typedef of PORT_Interface device object structure
 
 //-----------------------------------------------------------------------------
 
@@ -75,27 +79,30 @@ typedef struct PORT_Interface PORT_Interface; //! Typedef of PORT_Interface devi
  * This function will be called to change the direction of a whole PORT
  * @param[in] *pIntDev Is the PORT interface container structure used for the PORT set direction
  * @param[in] pinsDirection Set the PORT pin direction, if bit is '1' then the corresponding GPIO is input else it's output
+ * @param[in] pinsChangeMask Set the PORT pin mask, if bit is '1' then the corresponding GPIO will be configured
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*PORTSetDirection_Func)(PORT_Interface *pIntDev, const uint32_t pinsDirection);
+typedef eERRORRESULT (*PORTSetDirection_Func)(PORT_Interface *pIntDev, const uint32_t pinsDirection, const uint32_t pinsChangeMask);
 
 
 /*! @brief Interface function for getting PORT pins input level
  *
  * @param[in] *pIntDev Is the PORT interface container structure used to get input level of a whole PORT
  * @param[out] *pinsLevel Return the actual level of the PORT pins. If bit is '1' then the corresponding GPIO is level high else it's level low
+ * @param[in] pinsChangeMask Set the PORT pin mask, if bit is '1' then the corresponding GPIO will be read
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*PORTGetInputLevel_Func)(PORT_Interface *pIntDev, uint32_t *pinsLevel);
+typedef eERRORRESULT (*PORTGetInputLevel_Func)(PORT_Interface *pIntDev, uint32_t* const pinsLevel, const uint32_t pinsChangeMask);
 
 
 /*! @brief Interface function for setting PORT pins output level
  *
  * @param[in] *pIntDev Is the PORT interface container structure used to set output level of a whole PORT
  * @param[in] pinsLevel Set the PORT pins output level, if bit is '1' then the corresponding GPIO is level high else it's level low
+ * @param[in] pinsChangeMask Set the PORT pin mask, if bit is '1' then the corresponding GPIO will be configured
  * @return Returns an #eERRORRESULT value enum
  */
-typedef eERRORRESULT (*PORTSetOutputLevel_Func)(PORT_Interface *pIntDev, const uint32_t pinsLevel);
+typedef eERRORRESULT (*PORTSetOutputLevel_Func)(PORT_Interface *pIntDev, const uint32_t pinsLevel, const uint32_t pinsChangeMask);
 
 //-----------------------------------------------------------------------------
 
@@ -120,7 +127,7 @@ struct PORT_Interface
 // GPIO Interface functions definitions
 //********************************************************************************************************************
 
-typedef struct GPIO_Interface GPIO_Interface; //! Typedef of GPIO_Interface device object structure
+typedef struct GPIO_Interface GPIO_Interface; //!< Typedef of GPIO_Interface device object structure
 
 //-----------------------------------------------------------------------------
 
