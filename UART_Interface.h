@@ -32,6 +32,7 @@
  *****************************************************************************/
 
 /* Revision history:
+ * 1.0.1    Add UART_Interface's UniqueID
  * 1.0.0    Release version
  *****************************************************************************/
 #ifndef __UART_INTERFACE_H_INC
@@ -110,6 +111,7 @@ struct UART_Interface
 struct UART_Interface
 {
   void* InterfaceDevice;             //!< This is the pointer that will be in the first parameter of all interface call functions
+  uint32_t UniqueID;                 //!< This is a protection for the #InterfaceDevice pointer. This value will be check when using the struct UART_Interface in the driver which use the generic UART interface
   UARTtransmit_Func fnUART_Transmit; //!< This function will be called when a driver/library needs to transmit data
   UARTreceive_Func fnUART_Receive;   //!< This function will be called when a driver/library needs to receive data
   uint8_t Channel;                   //!< UART channel of the interface device
