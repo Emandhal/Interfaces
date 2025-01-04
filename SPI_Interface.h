@@ -210,7 +210,7 @@ typedef struct
 //! Prepare SPI packet description to transmit bytes with DMA
 #define SPI_INTERFACE_TX_DATA_DMA_DESC(txData,useDMA,size,terminate)                        \
   {                                                                                         \
-    SPI_MEMBER(Config.Value) (useDMA ? I2C_USE_NON_BLOCKING : I2C_BLOCKING)                 \
+    SPI_MEMBER(Config.Value) (useDMA ? SPI_USE_NON_BLOCKING : SPI_BLOCKING)                 \
                            | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE),                \
     SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                          \
     SPI_MEMBER(DummyByte   ) 0x00,                                                          \
@@ -223,7 +223,7 @@ typedef struct
 //! Prepare SPI packet description to transmit bytes (TxData = RxData) with DMA
 #define SPI_INTERFACE_RX_DATA_DMA_DESC(data,useDMA,size,terminate)                          \
   {                                                                                         \
-    SPI_MEMBER(Config.Value) (useDMA ? I2C_USE_NON_BLOCKING : I2C_BLOCKING)                 \
+    SPI_MEMBER(Config.Value) (useDMA ? SPI_USE_NON_BLOCKING : SPI_BLOCKING)                 \
                            | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE),                \
     SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                          \
     SPI_MEMBER(DummyByte   ) 0x00,                                                          \
@@ -236,7 +236,7 @@ typedef struct
 //! Prepare SPI packet description to receive data using dummy byte with DMA
 #define SPI_INTERFACE_RX_DATA_DMA_WITH_DUMMYBYTE_DESC(dummyByte,rxData,useDMA,size,terminate)                \
   {                                                                                                          \
-    SPI_MEMBER(Config.Value) (useDMA ? I2C_USE_NON_BLOCKING : I2C_BLOCKING)                                  \
+    SPI_MEMBER(Config.Value) (useDMA ? SPI_USE_NON_BLOCKING : SPI_BLOCKING)                                  \
                            | SPI_ENDIAN_TRANSFORM_SET(SPI_NO_ENDIAN_CHANGE) | SPI_USE_DUMMYBYTE_FOR_RECEIVE, \
     SPI_MEMBER(ChipSelect  ) pComp->SPIchipSelect,                                                           \
     SPI_MEMBER(DummyByte   ) dummyByte,                                                                      \
